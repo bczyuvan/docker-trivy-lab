@@ -1,0 +1,62 @@
+name: Análisis de Seguridad con Trivy
+
+# Se ejecuta automáticamente en:
+# - push a la rama main
+# - pull requests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  trivy-scan:
+    name: Escaneo de seguridad con Trivy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        # Descarga el código del repositorio para poder construir la imagen
+
+      - name: Instalar Trivy (recomendado)
+        uses: aquasecurity/setup-trivy@v0.2.6
+
+      # Instalación manual (solo ejemplo didáctico, no recomendada para CI):
+      # - name: Instalar Trivy manualmente con apt
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y trivy
+      #
+      # Por qué es mejor usar `uses` que `apt install`:
+      # 1) Reproducibilidad: fijas versión exacta y evitas cambios inesperados.
+      # 2) Menos fragilidad: apt depende del estado de repositorios del runner.
+      # 3) Mejor mantenimiento: el workflow queda más claro y portable.
+
+      - name: Construir la imagen Docker
+        run: |
+          echo "🔨 Construyendo la imagen Docker..."
+          docker build -t vulnerable-image:latest .
+          echo "✅ Imagen construida correctamente"
+
+      - name: Escanear imagen con Trivy
+        run: |
+          echo "🔍 Iniciando escaneo de vulnerabilidades con Trivy..."
+
+          trivy image \
+            --exit-code 1 \
+            --severity CRITICAL \
+            --format table \
+            --output trivy-report.txt \
+            vulnerable-image:latest
+
+          echo "📄 Reporte guardado en trivy-report.txt"
+
+      - name: Mostrar resumen del escaneo
+        if: always()  # Se ejecuta aunque falle el paso anterior
+        run: |
+          echo "📊 === RESUMEN DEL ESCANEO DE SEGURIDAD ==="
+          if [ -f trivy-report.txt ]; then
+            cat trivy-report.txt
+          else
+            echo "No se pudo generar el reporte."
+          fi
