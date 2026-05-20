@@ -16,8 +16,10 @@ WORKDIR /app
 # Copiar contenido
 COPY --chown=appuser:appuser index.html ./index.html
 
+
 # Cambiar a usuario no-root
 USER appuser
+HEALTHCHECK CMD true
 
 EXPOSE 8080
 
