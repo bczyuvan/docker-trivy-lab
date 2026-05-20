@@ -1,10 +1,11 @@
 FROM debian:13-slim
 
 # Instalar únicamente lo necesario y limpiar caché
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        openssl \
-        netcat-traditional && \
+        python3 \
+        openssl && \
     rm -rf /var/lib/apt/lists/*
 
 # Crear usuario no-root
@@ -24,4 +25,4 @@ HEALTHCHECK CMD true
 EXPOSE 8080
 
 # Comando seguro sin shell interactiva
-CMD ["sh", "-c", "while true; do echo 'HTTP/1.1 200 OK\r\n\r\nOK' | nc -l -p 8080; done"]
+CMD ["python3", "-m", "http.server", "8080"]
